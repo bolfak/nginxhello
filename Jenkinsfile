@@ -8,7 +8,7 @@ pipeline {
     }
     stage('Build Docker Imagesh') {
       steps {
-        sh 'docker build -t bolfak/nginxhello .''
+        sh 'docker build -t bolfak/nginxhello .'
         }
       }
     }
