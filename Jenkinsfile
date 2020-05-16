@@ -6,7 +6,7 @@ pipeline {
         sh 'tidy -q -e *.html'
       }
     }
-    stage('Build Docker Imagesh'') {
+    stage('Build Docker Imagesh') {
       steps {
         sh 'docker build -t bolfak/nginxhello .''
         }
