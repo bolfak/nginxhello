@@ -1,0 +1,91 @@
+Resources:
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: 10.0.0.0/16
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            Tags:
+                - Key: Name
+                  Value: TestStack
+    
+
+    ClusterControlPlaneSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Cluster Security group for communicating with worker nodes
+            VpcId: !Ref VPC
+
+
+    WorkerNodesSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Security group for worker nodes
+            VpcId: !Ref VPC
+    
+    WorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow node to communicate with each other
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: '-1'
+            FromPort: 0
+            ToPort: 65535
+    
+    WorkerNodesSecurityGroupFromControlPlaneIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow worker Kubelets and pods to receive communication from the cluster control plane
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+    
+    ControlPlaneEgressToWorkerNodesSecurityGroup:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow the cluster control plane to communicate with worker Kubelet and pods
+            GroupId: !Ref ClusterControlPlaneSecurityGroup
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+
+    WorkerNodesSecurityGroupFromControlPlaneOn443Ingress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow pods running extension API servers on port 443 to receive communication from cluster control plane
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref ClusterControlPlaneSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+    ControlPlaneEgressToWorkerNodesSecurityGroupOn443:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow the cluster control plane to communicate with pods running extension API servers on port 443
+            GroupId: !Ref ClusterControlPlaneSecurityGroup
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+    ClusterControlPlaneSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            Description: Allow pods to communicate with the cluster API Server
+            GroupId: !Ref ClusterControlPlaneSecurityGroup
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            ToPort: 443
+            FromPort: 443
+            

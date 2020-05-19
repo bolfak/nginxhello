@@ -1,0 +1,87 @@
+Resources:
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: 10.0.0.0/16
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            Tags:
+                - Key: Name
+                  Value: TestStack
+    
+
+    ControlPlaneSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Cluster Security group for communicating with worker nodes
+            VpcId: !Ref VPC
+
+
+    WorkerNodesSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Security group for worker nodes
+            VpcId: !Ref VPC
+    
+    
+    WorkerNodesFromWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: -1
+            FromPort: 0
+            ToPort: 65535
+    
+    ControlPlaneToWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+    
+    ControlPlaneToWorkerNodesSecurityGroupEgress:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref ControlPlaneSecurityGroup
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+    
+                    
+    ControlPlaneToWorkerNodesSecurityGroupIngressSSL:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref ControlPlaneSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+    
+    ControlPlaneToWorkerNodesSecurityGroupEgress:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref ControlPlaneSecurityGroup
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+
+    ControlPlaneFromWorkerWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref ControlPlaneSecurityGroup
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443

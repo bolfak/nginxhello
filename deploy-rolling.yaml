@@ -1,0 +1,41 @@
+  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginxhello-test-deployment
+  labels:
+    app: nginxhello-test
+spec:
+  replicas: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nginxhello-test
+  template:
+    metadata:
+      labels:
+        app: nginxhello-test
+    spec:
+      containers:
+      - name: nginxhello-test
+        image: bolfak/nginxhello:latest
+        ports:
+          - containerPort: 80
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginxhello-test
+  labels:
+    app: nginxhello-test
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: nginxhello-test
+  type: LoadBalancer

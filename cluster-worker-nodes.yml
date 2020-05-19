@@ -1,0 +1,173 @@
+Description: >
+    My Capstone Cluster Worker Nodes
+
+Parameters:
+    EnvironmentName:
+        Description: The environment name
+        Type: String
+
+Resources:
+    WorkerNodesInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        Properties: 
+            Path: /
+            Roles: 
+            - !Ref WorkerNodesIAMRole
+
+    WorkerNodesIAMRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - ec2.amazonaws.com
+                  Action:
+                  - sts:AssumeRole
+            Path: /
+            ManagedPolicyArns:
+            - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+            - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+            - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+
+    WorkerNodesSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: Security group for worker nodes
+            VpcId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-VPCID"
+            Tags:
+                - Key: !Sub "kubernetes.io/cluster/${EnvironmentName}"
+                  Value: 'owned'
+
+
+    WorkerNodesFromWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: -1
+            FromPort: 0
+            ToPort: 65535
+
+    ControlPlaneToWorkerWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-CCP-SG"
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+
+    ControlPlaneToWorkerWorkerNodesSecurityGroupEgress:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-CCP-SG"
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 1025
+            ToPort: 65535
+
+                    
+    ControlPlaneToWorkerWorkerNodesSecurityGroupIngressSSL:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: !Ref WorkerNodesSecurityGroup
+            SourceSecurityGroupId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-CCP-SG"
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+    ControlPlaneToWorkerNodesSecurityGroupEgress:
+        Type: AWS::EC2::SecurityGroupEgress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-CCP-SG"
+            DestinationSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+
+    ControlPlaneFromWorkerWorkerNodesSecurityGroupIngress:
+        Type: AWS::EC2::SecurityGroupIngress
+        DependsOn: WorkerNodesSecurityGroup
+        Properties:
+            GroupId: 
+                Fn::ImportValue:
+                    Fn::Sub: "${EnvironmentName}-CCP-SG"
+            SourceSecurityGroupId: !Ref WorkerNodesSecurityGroup
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+
+
+    WorkerNodesLaunchConfig:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+            AssociatePublicIpAddress: true
+            UserData:
+                Fn::Base64: !Sub |
+                    #!/bin/bash
+                    set -o xtrace
+                    /etc/eks/bootstrap.sh ${EnvironmentName}
+                    /opt/aws/bin/cfn-signal --exit-code $? \
+                            --stack  ${AWS::StackName} \
+                            --resource NodeGroup  \
+                            --region ${AWS::Region}
+            ImageId: ami-065418523a44331e5
+            KeyName: jenkins
+            IamInstanceProfile: !Ref WorkerNodesInstanceProfile
+            SecurityGroups:
+            - Ref: WorkerNodesSecurityGroup
+            InstanceType: t2.medium
+            BlockDeviceMappings:
+                - DeviceName: /dev/xvda
+                  Ebs:
+                    VolumeSize: 30
+                    VolumeType: gp2
+                    DeleteOnTermination: true
+
+    WorkerNodeGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            VPCZoneIdentifier:
+            - Fn::ImportValue: 
+                !Sub "${EnvironmentName}-PUB-NETS"
+            LaunchConfigurationName:
+                Ref: WorkerNodesLaunchConfig
+            MinSize: 2
+            MaxSize: 6
+            DesiredCapacity: 3
+            Tags:
+            - Key: Name
+              Value: !Sub "${EnvironmentName}-Node"
+              PropagateAtLaunch: true
+            - Key: !Sub "kubernetes.io/cluster/${EnvironmentName}"
+              Value: "owned"
+              PropagateAtLaunch: true
+        UpdatePolicy:
+            AutoScalingRollingUpdate:
+                MaxBatchSize: '1'
+                MinInstancesInService: 3
+                PauseTime: "PT5M"
+
+Outputs:
+    WorkerNodesIAMRole:
+        Description: The node IAM role
+        Value: !GetAtt WorkerNodesIAMRole.Arn

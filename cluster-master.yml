@@ -1,0 +1,48 @@
+Description: >
+    My Capstone EKS Cluster
+
+Parameters:
+    EnvironmentName:
+        Description: The environment name
+        Type: String
+
+Resources:
+    EKSClusterIAMRole:
+        Type: AWS::IAM::Role
+        Properties:
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                - Effect: Allow
+                  Principal:
+                    Service:
+                    - eks.amazonaws.com
+                  Action:
+                  - sts:AssumeRole
+            ManagedPolicyArns:
+            - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}EKSRole
+
+    CapstoneCluster:
+        Type: AWS::EKS::Cluster
+        Properties:
+            Name: !Ref EnvironmentName
+            RoleArn: !GetAtt EKSClusterIAMRole.Arn
+            ResourcesVpcConfig:
+                SecurityGroupIds:
+                - Fn::ImportValue: !Sub "${EnvironmentName}-CCP-SG"
+
+                SubnetIds:
+                - Fn::ImportValue: !Sub "${EnvironmentName}-PUB1-SN"
+                - Fn::ImportValue: !Sub "${EnvironmentName}-PUB2-SN"
+                - Fn::ImportValue: !Sub "${EnvironmentName}-PUB3-SN"
+
+Outputs: 
+
+    EKSClusterIAMRole: 
+        Description: A reference to the EKS cluster role
+        Value: !GetAtt EKSClusterIAMRole.Arn
+        Export:
+            Name: !Sub ${EnvironmentName}-Cluster-RoleArn
