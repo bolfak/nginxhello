@@ -14,9 +14,11 @@ pipeline {
         sh 'docker build -t bolfak/nginxhello:${APP_VERSION} .'
       }
     }
-    stage('Push image to Docker Registry') {
+    stage('Build with plugun') {
       steps {
-        sh 'docker push bolfak/nginxhello:${APP_VERSION}'
+        script {
+          docker.build "bolfak/nginxhello:${APP_VERSION}"
+        }
       }
     }
   }
