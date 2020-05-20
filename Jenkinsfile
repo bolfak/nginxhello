@@ -1,7 +1,7 @@
 pipeline {
   agent any
   environment {
-    APP_VERSION = '4.0'
+    APP_VERSION = '${BUILD_NUMBER}'
     DOCKER_REGISTRY = 'bolfak'
     APP_NAME = 'nginxhello'
     DEPLOYMENT_NAME = 'nginxhello-test-deployment'
