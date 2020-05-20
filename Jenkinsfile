@@ -1,11 +1,13 @@
 pipeline {
   agent any
   environment {
-    APP_VERSION = '3.0'
+    APP_VERSION = '4.0'
     DOCKER_REGISTRY = 'bolfak'
     APP_NAME = 'nginxhello'
+    DEPLOYMENT_NAME = 'nginxhello-test-deployment'
+    CONTAINER_NAME = 'nginxhello-test'
     dockerImage = ''
-    registryCredentials = 'DockerHub'
+    REGISTRY_CREDENTIALS = 'DockerHub'
   }
   stages {
     stage('Lint HTML') {
@@ -23,9 +25,16 @@ pipeline {
     stage('Deploy Docker Image') {
       steps {
         script {
-          docker.withRegistry( '', registryCredentials) {
+          docker.withRegistry( '', REGISTRY_CREDENTIALS) {
             dockerImage.push()
           }
+        }
+      }
+    }
+    stage('Deploy Latest image to cluster') {
+      steps {
+        script {
+          sh 'kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${DOCKER_REGISTRY}/${APP_NAME}:${APP_VERSION}'
         }
       }
     }
