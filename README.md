@@ -35,3 +35,7 @@ Run the **create-worker-stack.sh** script passing in the appropriate parameters.
 -  [aws-auth-cm.yaml](https://github.com/bolfak/nginxhello/blob/master/aws-auth-cm.yaml) - This is the kubectl role mapping config
 
 
+![Linkting Error](https://github.com/bolfak/nginxhello/blob/master/screenshots/Lint_error.PNG)
+
+
+
