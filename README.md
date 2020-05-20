@@ -31,7 +31,7 @@ Run the **create-worker-stack.sh** script passing in the appropriate parameters.
 
 ## Other files
 
--  [deploy-rolling.yaml])(https://github.com/bolfak/nginxhello/blob/master/deploy-rolling.yaml) - This is the deployment config file
--  [aws-auth-cm.yaml])(https://github.com/bolfak/nginxhello/blob/master/aws-auth-cm.yaml) - This is the kubectl role mapping config
+-  [deploy-rolling.yaml](https://github.com/bolfak/nginxhello/blob/master/deploy-rolling.yaml) - This is the deployment config file
+-  [aws-auth-cm.yaml](https://github.com/bolfak/nginxhello/blob/master/aws-auth-cm.yaml) - This is the kubectl role mapping config
 
 
