@@ -34,8 +34,20 @@ Run the **create-worker-stack.sh** script passing in the appropriate parameters.
 -  [deploy-rolling.yaml](https://github.com/bolfak/nginxhello/blob/master/deploy-rolling.yaml) - This is the deployment config file
 -  [aws-auth-cm.yaml](https://github.com/bolfak/nginxhello/blob/master/aws-auth-cm.yaml) - This is the kubectl role mapping config
 
+## Screenshots
 
+#### Linting Error
 ![Linkting Error](https://github.com/bolfak/nginxhello/blob/master/screenshots/Lint_error.PNG "Linkting Error")
+
+#### Successful Build
+![Successful Build](https://github.com/bolfak/nginxhello/blob/master/screenshots/Successful_Build.PNG "Successful Build")
+
+### Initial App Page
+![Initial App Page](https://github.com/bolfak/nginxhello/blob/master/screenshots/ngnix_first_deployment.PNG "Initial App Page")
+
+### App Page after update
+![App Page after update](https://github.com/bolfak/nginxhello/blob/master/screenshots/ngnix_after_rolling_deployment.PNG "IApp Page after update")
+
 
 
 
