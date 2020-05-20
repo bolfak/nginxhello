@@ -42,10 +42,13 @@ Run the **create-worker-stack.sh** script passing in the appropriate parameters.
 #### Successful Build
 ![Successful Build](https://github.com/bolfak/nginxhello/blob/master/screenshots/Successful_Build.PNG "Successful Build")
 
-### Initial App Page
+#### Rolling Update execution
+![Rolling Update execution](https://github.com/bolfak/nginxhello/blob/master/screenshots/Status_Rolling_Update.PNG "Rolling Update execution")
+
+#### Initial App Page
 ![Initial App Page](https://github.com/bolfak/nginxhello/blob/master/screenshots/ngnix_first_deployment.PNG "Initial App Page")
 
-### App Page after update
+#### App Page after update
 ![App Page after update](https://github.com/bolfak/nginxhello/blob/master/screenshots/ngnix_after_rolling_deployment.PNG "IApp Page after update")
 
 
